@@ -53,7 +53,7 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: var(--sky); 
 }
 .bossbar .name { font-family: var(--display); font-size: 14px; color: var(--plum); display: flex; justify-content: space-between; gap: 8px; }
 .bossbar .name small { font-family: var(--body); font-weight: 800; font-size: 12px; color: var(--coral); }
-.pips { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; }
+.pips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
 .pip { height: 12px; border-radius: 4px; border: 2px solid var(--ink); background: var(--plum); }
 .pip.empty { background: color-mix(in srgb, var(--ink) 15%, var(--paper)); }
 
@@ -599,7 +599,7 @@ const LEVELS = {
     name: 'マグマとりで',
     sky: ['#2f2350', '#f08a5d'], fog: 0x7a4a62, hemi: [0xffe0d0, 0x5a2a20], sun: 0xffc9a0,
     killY: -5.5, start: [0, 0, 4],
-    arena: { x: 0, z: -90, half: 12 },
+    arena: { x: 0, z: -95, half: 17 },
     build() {
       // Start keep
       addBox(0, -2, 0, 14, 4, 14, 'castle');
@@ -624,19 +624,19 @@ const LEVELS = {
       addFlag(-2.5, 0, -70.5);
       addHeart(2, 1.2, -72);
       // Boss arena with pillars
-      addBox(0, -2, -90, 24, 4, 24, 'castle');
+      addBox(0, -2, -95, 34, 4, 34, 'castle');
       // Pillars are taller than the boss (3.6 vs 2.8) so you can drop onto its head; a step block makes each one reachable with a normal jump
-      [[-6, -84], [6, -84], [-6, -96], [6, -96]].forEach(([x, z]) => {
+      [[-9, -86], [9, -86], [-9, -104], [9, -104]].forEach(([x, z]) => {
         addBox(x, 1.8, z, 2, 3.6, 2, 'castle', { pillar: true });
         addBox(x - Math.sign(x) * 1.8, 0.8, z, 1.6, 1.6, 1.6, 'castle', { pillar: true });
       });
-      makeBoss(0, -95);
-      addStar(0, 1.8, -90, false);
+      makeBoss(0, -103);
+      addStar(0, 1.8, -95, false);
       addCoins([
         [0, 1.2, -11], [0, 1.2, -18], [0, 1.2, -25], [0, 1.2, -31],
         [-5, 1, -45], [-5, 1, -41], [5, 1, -45], [5, 1, -41],
         [0, 1, -54], [0, 1, -60], [0, 1, -66],
-        [-6, 4.6, -84], [6, 4.6, -84], [-6, 4.6, -96], [6, 4.6, -96],
+        [-9, 4.6, -86], [9, 4.6, -86], [-9, 4.6, -104], [9, 4.6, -104],
       ]);
       // Scenery: lava sea, rock spires, embers
       const lava = put(new THREE.Mesh(new THREE.PlaneGeometry(900, 900), std({ color: 0xff5a1f, emissive: 0xc23a00, roughness: 0.6 })));
@@ -659,7 +659,7 @@ const STAGE_ORDER = ['1-1', '1-2'];
 
 // ---------- Boss: King Mush ----------
 const bossMat = { cap: std({ color: 0x7b2d8b }), spike: std({ color: 0xffc93c, metalness: 0.5, roughness: 0.3, emissive: 0x332200 }), brow: std({ color: 0x1d2a44 }) };
-const BOSS_HP = 8, BOSS_R = 1.8, BOSS_H = 2.8;
+const BOSS_HP = 3, BOSS_R = 1.8, BOSS_H = 2.8;
 function makeBoss(x, z) {
   const g = put(new THREE.Group());
   const body = new THREE.Group(); g.add(body);
@@ -804,7 +804,7 @@ function updateBoss(dt, t) {
       const hit = bossMove(angry ? 21 : 16, b.cdir, dt);
       if (Math.random() < dt * 30) puff(new THREE.Vector3(b.x, 0.2, b.z), 0xc9b8c0, 1, 2);
       if (hit === 'pillar') {
-        b.state = 'stunned'; b.t = angry ? 1.7 : 2.4; cam.shake = 0.5; sfx.pound();
+        b.state = 'stunned'; b.t = angry ? 3.2 : 4.2; cam.shake = 0.5; sfx.pound();
         puff(new THREE.Vector3(b.x, 1.5, b.z), 0xffffff, 12, 5);
         toast('いまだ！ふみつけろ！', 1.2);
       } else if (hit === 'edge' || b.t <= 0) { b.state = 'recover'; b.t = 0.7; }
@@ -826,7 +826,7 @@ function updateBoss(dt, t) {
         puff(new THREE.Vector3(b.x, 0.3, b.z), 0xc9b8c0, 10, 6);
         b.jumps--;
         if (b.jumps > 0) { b.state = 'pause'; b.t = angry ? 0.2 : 0.35; }
-        else { b.state = 'dazed'; b.t = angry ? 0.9 : 1.3; }
+        else { b.state = 'dazed'; b.t = angry ? 2.4 : 3.2; }
       }
       break;
     }
@@ -1331,9 +1331,9 @@ function step(dt, t) {
   waves = waves.filter(w => {
     w.r += w.speed * dt;
     w.mesh.scale.set(w.r, 1, w.r);
-    w.mesh.material.opacity = Math.max(0, 0.85 * (1 - w.r / 16));
+    w.mesh.material.opacity = Math.max(0, 0.85 * (1 - w.r / 24));
     if (playing && P.pos.y < 0.6 && Math.abs(Math.hypot(P.pos.x - w.x, P.pos.z - w.z) - w.r) < 0.55) hurt(new THREE.Vector3(w.x, 0, w.z));
-    if (w.r > 16) { world.remove(w.mesh); return false; }
+    if (w.r > 24) { world.remove(w.mesh); return false; }
     return true;
   });
 

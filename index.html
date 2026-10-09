@@ -625,14 +625,18 @@ const LEVELS = {
       addHeart(2, 1.2, -72);
       // Boss arena with pillars
       addBox(0, -2, -90, 24, 4, 24, 'castle');
-      [[-6, -84], [6, -84], [-6, -96], [6, -96]].forEach(([x, z]) => addBox(x, 1.5, z, 2, 3, 2, 'castle', { pillar: true }));
+      // Pillars are taller than the boss (3.6 vs 2.8) so you can drop onto its head; a step block makes each one reachable with a normal jump
+      [[-6, -84], [6, -84], [-6, -96], [6, -96]].forEach(([x, z]) => {
+        addBox(x, 1.8, z, 2, 3.6, 2, 'castle', { pillar: true });
+        addBox(x - Math.sign(x) * 1.8, 0.8, z, 1.6, 1.6, 1.6, 'castle', { pillar: true });
+      });
       makeBoss(0, -95);
       addStar(0, 1.8, -90, false);
       addCoins([
         [0, 1.2, -11], [0, 1.2, -18], [0, 1.2, -25], [0, 1.2, -31],
         [-5, 1, -45], [-5, 1, -41], [5, 1, -45], [5, 1, -41],
         [0, 1, -54], [0, 1, -60], [0, 1, -66],
-        [-6, 4, -84], [6, 4, -84], [-6, 4, -96], [6, 4, -96],
+        [-6, 4.6, -84], [6, 4.6, -84], [-6, 4.6, -96], [6, 4.6, -96],
       ]);
       // Scenery: lava sea, rock spires, embers
       const lava = put(new THREE.Mesh(new THREE.PlaneGeometry(900, 900), std({ color: 0xff5a1f, emissive: 0xc23a00, roughness: 0.6 })));
@@ -883,8 +887,11 @@ function updateBoss(dt, t) {
   if (!playing || b.state === 'hurt' || b.state === 'intro' && b.y > 2) return;
   const dx = P.pos.x - b.x, dz = P.pos.z - b.z, dist = Math.hypot(dx, dz);
   if (dist < BOSS_R + R && P.pos.y < b.y + BOSS_H && P.pos.y + H > b.y) {
-    const onHead = P.vel.y < 0 && P.pos.y > b.y + BOSS_H * 0.6;
-    if (onHead && vul) {
+    const onHead = P.vel.y <= 0 && P.pos.y > b.y + BOSS_H * (vul ? 0.4 : 0.6);
+    if (vul && !onHead) {
+      // Dizzy boss: bumping its side only pushes you away, so you can line up a stomp
+      if (dist > 0.01) { P.pos.x = b.x + dx / dist * (BOSS_R + R + 0.02); P.pos.z = b.z + dz / dist * (BOSS_R + R + 0.02); }
+    } else if (onHead && vul) {
       damageBoss(P.pound === 'fall' ? 2 : 1);
       P.pound = null; P.vel.y = 16; P.cut = true; P.combo = 0;
       P.vel.x = Math.sin(toP) * 6; P.vel.z = Math.cos(toP) * 6;
